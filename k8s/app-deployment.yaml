@@ -1,0 +1,47 @@
+# Single pod: SQLite is a file on a ReadWriteOnce volume, so the app must not run more than one replica.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: job-board-portal
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: job-board
+  template:
+    metadata:
+      labels:
+        app: job-board
+    spec:
+      containers:
+        - name: app
+          image: job-board-portal:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secret
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: app-data

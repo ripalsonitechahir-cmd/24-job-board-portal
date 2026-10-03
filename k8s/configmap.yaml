@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: job-board-portal
+data:
+  PORT: "4000"
+  DATABASE_URL: "file:/data/app.db"
+  ADMIN_USERNAME: "admin"
